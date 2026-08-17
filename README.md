@@ -2,9 +2,9 @@
 📄 MinerU OCR – Пакетная обработка документов
 Графический инструмент для массового распознавания текста (OCR) с использованием облачного API MinerU.
 
-https://img.shields.io/badge/Python-3.10%252B-blue
-https://img.shields.io/badge/License-MIT-green
-https://img.shields.io/badge/Platform-Windows-lightgrey
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey)
 
 📌 Описание
 Это приложение позволяет пакетно обрабатывать PDF, изображения и офисные документы (Word, Excel, PowerPoint) через API MinerU.

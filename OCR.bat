@@ -1,0 +1,6 @@
+@echo off
+chcp 65001 >nul
+echo Установка зависимостей (если нужно)...
+pip install requests markdown >nul 2>&1
+echo Запуск OCR...
+python OCR.py

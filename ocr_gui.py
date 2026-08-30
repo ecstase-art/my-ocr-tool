@@ -22,7 +22,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # ===== НАСТРОЙКИ =====
-API_KEY = "sk-i7BjlvyEx7FuSu59A8oMk02pmTl6CQGt9M4wzkxGY8yFvl9J"
+API_KEY = "sk-АПИКЛЮЧ"
 EXTENSIONS = ('.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx',
               '.png', '.jpg', '.jpeg', '.jp2', '.webp', '.gif', '.bmp')
 OFFICE_EXTENSIONS = ('.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx')

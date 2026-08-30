@@ -1,0 +1,7 @@
+requests
+urllib3
+opencv-python
+pytesseract
+Pillow
+markdown
+pyinstaller

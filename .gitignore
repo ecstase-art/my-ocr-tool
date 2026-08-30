@@ -1,4 +1,8 @@
-"*.exe" 
-"*.zip" 
-"build/" 
-"dist/" 
+*.exe
+*.zip
+build/
+dist/
+__pycache__/
+*.pyc
+.env
+processed.json

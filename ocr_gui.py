@@ -23,8 +23,6 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 # ===== НАСТРОЙКИ =====
 API_KEY = os.environ.get("MINERU_API_KEY")
-if not API_KEY:
-    raise RuntimeError("MINERU_API_KEY не задан")
 EXTENSIONS = ('.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx',
               '.png', '.jpg', '.jpeg', '.jp2', '.webp', '.gif', '.bmp')
 OFFICE_EXTENSIONS = ('.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx')
@@ -33,6 +31,12 @@ BATCH_SIZE = 20  # Уменьшение размера пакетов
 MAX_RETRIES = 3
 TIMEOUT = 3600
 CHECKPOINT_FILE = "processed.json"
+
+def require_api_key():
+    """Возвращает ключ MinerU API или сообщает пользователю, как его задать."""
+    if not API_KEY:
+        raise RuntimeError("MINERU_API_KEY не задан. Задайте переменную окружения перед запуском.")
+    return API_KEY
 
 # ===== СЕССИЯ С ПОВТОРАМИ =====
 def get_session():
@@ -52,32 +56,35 @@ session = get_session()
 
 # ===== КОРРЕКЦИЯ ОРИЕНТАЦИИ ИЗОБРАЖЕНИЙ =====
 def correct_image_orientation(image_path):
-    try:
-        img = cv2.imread(image_path)
-        if img is None:
-            return image_path
-
-        try:
-            osd_data = pytesseract.image_to_osd(img, output_type=pytesseract.Output.DICT)
-            angle = osd_data.get('orientation', 0)
-            if angle == 180:
-                rotated = cv2.rotate(img, cv2.ROTATE_180)
-            elif angle == 90:
-                rotated = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            elif angle == 270:
-                rotated = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-            else:
-                return image_path
-            temp_path = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False).name
-            cv2.imwrite(temp_path, rotated)
-            return temp_path
-        except Exception as e:
-            logging.error(f"Error processing image {image_path}: {e}")
-        finally:
-            os.remove(image_path)  # Удаление исходного изображения
-            return temp_path
-    except ImportError:
+    """Создаёт временную повёрнутую копию изображения, не изменяя исходный файл."""
+    img = cv2.imread(image_path)
+    if img is None:
         return image_path
+
+    try:
+        osd_data = pytesseract.image_to_osd(img, output_type=pytesseract.Output.DICT)
+    except (pytesseract.TesseractError, OSError) as e:
+        logging.warning(f"Не удалось определить ориентацию {image_path}: {e}")
+        return image_path
+
+    angle = osd_data.get('orientation', 0)
+    if angle == 180:
+        rotated = cv2.rotate(img, cv2.ROTATE_180)
+    elif angle == 90:
+        rotated = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    elif angle == 270:
+        rotated = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+    else:
+        return image_path
+
+    temp_file = tempfile.NamedTemporaryFile(suffix=Path(image_path).suffix or ".jpg", delete=False)
+    temp_path = temp_file.name
+    temp_file.close()
+    if not cv2.imwrite(temp_path, rotated):
+        os.unlink(temp_path)
+        logging.warning(f"Не удалось сохранить скорректированное изображение {image_path}")
+        return image_path
+    return temp_path
 
 # ===== ГЛАВНОЕ ПРИЛОЖЕНИЕ =====
 class OCRApp:
@@ -341,7 +348,7 @@ class OCRApp:
     # ===== API-ФУНКЦИИ =====
     def get_upload_urls(self, file_names, model_version="vlm"):
         url = "https://mineru.net/api/v4/file-urls/batch"
-        headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bearer {require_api_key()}", "Content-Type": "application/json"}
         data = {
             "files": [{"name": name} for name in file_names],
             "model_version": model_version,
@@ -390,19 +397,19 @@ class OCRApp:
             if use_path != path and os.path.exists(use_path):
                 try:
                     os.unlink(use_path)
-                except:
+                except OSError:
                     pass
         return success
 
     def poll_batch_result(self, batch_id, timeout=TIMEOUT, interval=5):
         url = f"https://mineru.net/api/v4/extract-results/batch/{batch_id}"
-        headers = {"Authorization": f"Bearer {API_KEY}"}
+        headers = {"Authorization": f"Bearer {require_api_key()}"}
         start = time.time()
         done = {}
         while time.time() - start < timeout:
             try:
                 resp = session.get(url, headers=headers, timeout=(10, 60))
-            except:
+            except requests.RequestException:
                 time.sleep(interval)
                 continue
             if resp.status_code != 200:
@@ -449,7 +456,7 @@ class OCRApp:
                         try:
                             import markdown
                             content = markdown.markdown(content, extensions=["tables", "fenced_code"])
-                        except:
+                        except ImportError:
                             content = f"<html><body><pre>{content}</pre></body></html>"
                     else:
                         self.log(f"  ❌ Нет HTML/MD в ZIP для {base}")

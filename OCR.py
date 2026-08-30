@@ -8,7 +8,9 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 # ===== НАСТРОЙКИ =====
-API_KEY = "sk-i7BjlvyEx7FuSu59A8oMk02pmTl6CQGt9M4wzkxGY8yFvl9J"
+API_KEY = os.environ.get("MINERU_API_KEY")
+if not API_KEY:
+    raise RuntimeError("MINERU_API_KEY не задан")
 EXTENSIONS = ('.pdf', '.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.docx', '.pptx', '.xlsx')
 BATCH_SIZE = 50
 

@@ -22,7 +22,9 @@ import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # ===== НАСТРОЙКИ =====
-API_KEY = "sk-АПИКЛЮЧ"
+API_KEY = os.environ.get("MINERU_API_KEY")
+if not API_KEY:
+    raise RuntimeError("MINERU_API_KEY не задан")
 EXTENSIONS = ('.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx',
               '.png', '.jpg', '.jpeg', '.jp2', '.webp', '.gif', '.bmp')
 OFFICE_EXTENSIONS = ('.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx')
